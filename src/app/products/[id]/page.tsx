@@ -11,8 +11,8 @@ if (!process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || !process.env.NEXT_PUBLIC_SANIT
 }
 
 const client = createClient({
-  projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || "",
-  dataset: process.env.NEXT_PUBLIC_SANITY_DATASET || "",
+  projectId: process.env.SANITY_PROJECT_ID || 'default_project_id',
+  dataset: process.env.SANITY_DATASET || 'production',
   apiVersion: process.env.SANITY_API_VERSION || '2021-08-31',
   useCdn: process.env.NEXT_PUBLIC_SANITY_USE_CDN === "true",
 });
