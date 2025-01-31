@@ -2,18 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { createClient } from "@sanity/client";
 
-
-// Sanity Client Configuration using environment variables
-const client = createClient({
-  projectId: process.env.SANITY_PROJECT_ID || 'default_project_id',
-  dataset: process.env.SANITY_DATASET || 'production',
-  apiVersion: process.env.SANITY_API_VERSION || '2021-08-31',
-  useCdn: true,
-});
-
-// Define types for Food and Category
 interface Category {
   _id: string;
   name: string;
@@ -23,10 +12,10 @@ interface Food {
   _id: string;
   name: string;
   price: number;
-  originalPrice: number;
+  originalPrice?: number;
   tags: string[];
   description: string;
-  imageUrl: string;
+  imageUrl?: string;
   available: boolean;
   category: Category;
 }
@@ -34,46 +23,44 @@ interface Food {
 const HeroMenu: React.FC = () => {
   const [foods, setFoods] = useState<Food[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [activeCategory, setActiveCategory] = useState<string>("Breakfast");
+  const [activeCategory, setActiveCategory] = useState<string>("");
 
   useEffect(() => {
-    const fetchData = async () => {
+    // Fetch categories initially
+    const fetchCategories = async () => {
       try {
-        // Fetch food data
-        const foodData = await client.fetch(`
-          *[_type == "food"] {
-            _id,
-            name,
-            price,
-            originalPrice,
-            tags,
-            description,
-            "imageUrl": image.asset->url,
-            available,
-            category->{
-              _id, 
-              name
-            }
-          }
-        `);
+        const response = await fetch("/api/sanity");
+        const data = await response.json();
+        setCategories(data.categories);
 
-        // Fetch category data
-        const categoryData = await client.fetch(`
-          *[_type == "foodCategory"] {
-            _id, 
-            name
-          }
-        `);
-
-        setFoods(foodData);
-        setCategories(categoryData);
+        // Set first category as default
+        if (data.categories.length > 0) {
+          setActiveCategory(data.categories[0]._id);
+        }
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("Error fetching categories:", error);
       }
     };
 
-    fetchData();
+    fetchCategories();
   }, []);
+
+  useEffect(() => {
+    if (!activeCategory) return;
+
+    // Fetch foods based on active category
+    const fetchFoods = async () => {
+      try {
+        const response = await fetch(`/api/sanity?category=${activeCategory}`);
+        const data = await response.json();
+        setFoods(data.foods);
+      } catch (error) {
+        console.error("Error fetching foods:", error);
+      }
+    };
+
+    fetchFoods();
+  }, [activeCategory]);
 
   return (
     <div>
@@ -104,21 +91,20 @@ const HeroMenu: React.FC = () => {
           {/* Menu Items */}
           <div className="flex flex-col md:flex-row gap-4">
             {/* Featured Image */}
-            <div className="md:w-1/2">
+            <div className="md:w-1/2 flex justify-center">
               <Image
                 src="/Hero-menu-sec-img/main.png"
                 alt="Featured Dish"
                 width={466}
                 height={362}
-                className="rounded-lg object-cover ml-[195px]"
+                className="rounded-lg object-cover"
               />
             </div>
 
             {/* Food Items */}
             <div className="md:w-1/2 grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {foods
-                .filter((food) => food.category._id === activeCategory)
-                .map((food) => (
+              {foods.length > 0 ? (
+                foods.map((food) => (
                   <div key={food._id} className="flex items-center gap-2">
                     <Image
                       src={food.imageUrl || "/placeholder.png"} // Fallback image
@@ -140,7 +126,10 @@ const HeroMenu: React.FC = () => {
                       </p>
                     </div>
                   </div>
-                ))}
+                ))
+              ) : (
+                <p className="text-gray-500 text-center w-full">No items available.</p>
+              )}
             </div>
           </div>
         </div>

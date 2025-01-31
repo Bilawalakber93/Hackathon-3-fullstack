@@ -8,9 +8,9 @@ import { createClient } from "@sanity/client";
 
 // Sanity Client Configuration using environment variables
 const client = createClient({
-  projectId: process.env.SANITY_PROJECT_ID || 'default_project_id',
-  dataset: process.env.SANITY_DATASET || 'production',
-  apiVersion: process.env.SANITY_API_VERSION || '2021-08-31',
+  projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || 'default_project_id',
+  dataset: process.env.NEXT_PUBLIC_SANITY_DATASET || 'production',
+  apiVersion: process.env.NEXT_PUBLIC_SANITY_API_VERSION || '2021-08-31',
   useCdn: process.env.NEXT_PUBLIC_SANITY_USE_CDN === "true",
 });
 
